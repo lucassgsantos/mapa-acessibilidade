@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { obterEstatisticas } from '../services/api';
 import { CATEGORIAS, RECURSOS } from '../constants';
 import { FiBarChart2, FiMapPin, FiStar, FiUsers } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 export default function Estatisticas() {
   const [dados, setDados] = useState(null);
@@ -17,6 +18,7 @@ export default function Estatisticas() {
       setDados(data);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
+      toast.error('Erro ao carregar estatísticas.');
     } finally {
       setCarregando(false);
     }

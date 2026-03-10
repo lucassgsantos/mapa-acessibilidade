@@ -1,44 +1,67 @@
 const Local = require('../models/Local');
 const Avaliacao = require('../models/Avaliacao');
+const { recalcularMedia } = require('../utils/calcularMedia');
 
-exports.criarLocal = async (req, res) => {
+function escapeRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+exports.criarLocal = async (req, res, next) => {
   try {
     const dados = { ...req.body, autor: req.usuario.id };
     const local = await Local.create(dados);
     await local.populate('autor', 'nome email');
     res.status(201).json(local);
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao criar local', erro: error.message });
+    next(error);
   }
 };
 
-exports.listarLocais = async (req, res) => {
+exports.listarLocais = async (req, res, next) => {
   try {
-    const { categoria, nota, recurso, busca } = req.query;
+    const { categoria, nota, recurso, busca, page = 1, limit = 50 } = req.query;
     let filtro = { status: 'ativo' };
 
     if (categoria) filtro.categoria = categoria;
     if (nota) filtro.notaAcessibilidade = { $gte: Number(nota) };
     if (recurso) filtro[`recursos.${recurso}`] = true;
     if (busca) {
+      const buscaSegura = escapeRegex(busca);
       filtro.$or = [
-        { nome: { $regex: busca, $options: 'i' } },
-        { endereco: { $regex: busca, $options: 'i' } },
-        { descricao: { $regex: busca, $options: 'i' } }
+        { nome: { $regex: buscaSegura, $options: 'i' } },
+        { endereco: { $regex: buscaSegura, $options: 'i' } },
+        { descricao: { $regex: buscaSegura, $options: 'i' } }
       ];
     }
 
-    const locais = await Local.find(filtro)
-      .populate('autor', 'nome')
-      .sort({ createdAt: -1 });
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(locais);
+    const [locais, total] = await Promise.all([
+      Local.find(filtro)
+        .populate('autor', 'nome')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Local.countDocuments(filtro)
+    ]);
+
+    res.json({
+      locais,
+      paginacao: {
+        pagina: pageNum,
+        limite: limitNum,
+        total,
+        paginas: Math.ceil(total / limitNum)
+      }
+    });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao listar locais', erro: error.message });
+    next(error);
   }
 };
 
-exports.obterLocal = async (req, res) => {
+exports.obterLocal = async (req, res, next) => {
   try {
     const local = await Local.findById(req.params.id)
       .populate('autor', 'nome email');
@@ -62,11 +85,11 @@ exports.obterLocal = async (req, res) => {
       totalAvaliacoes: avaliacoes.length
     });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao buscar local', erro: error.message });
+    next(error);
   }
 };
 
-exports.atualizarLocal = async (req, res) => {
+exports.atualizarLocal = async (req, res, next) => {
   try {
     let local = await Local.findById(req.params.id);
 
@@ -85,11 +108,11 @@ exports.atualizarLocal = async (req, res) => {
 
     res.json(local);
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao atualizar local', erro: error.message });
+    next(error);
   }
 };
 
-exports.deletarLocal = async (req, res) => {
+exports.deletarLocal = async (req, res, next) => {
   try {
     const local = await Local.findById(req.params.id);
 
@@ -106,11 +129,11 @@ exports.deletarLocal = async (req, res) => {
 
     res.json({ mensagem: 'Local removido com sucesso' });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao deletar local', erro: error.message });
+    next(error);
   }
 };
 
-exports.estatisticas = async (req, res) => {
+exports.estatisticas = async (req, res, next) => {
   try {
     const totalLocais = await Local.countDocuments({ status: 'ativo' });
     const totalAvaliacoes = await Avaliacao.countDocuments();
@@ -150,6 +173,6 @@ exports.estatisticas = async (req, res) => {
       recursosComuns
     });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao buscar estatísticas', erro: error.message });
+    next(error);
   }
 };

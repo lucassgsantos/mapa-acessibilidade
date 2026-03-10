@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { login as loginAPI, registrar as registrarAPI, obterPerfil } from '../services/api';
 import { AuthContext } from './AuthContextDef';
 
@@ -21,6 +21,18 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(getUsuarioInicial);
   const [carregando, setCarregando] = useState(getCarregandoInicial);
   const verificado = useRef(false);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('usuario');
+    setUsuario(null);
+  }, []);
+
+  useEffect(() => {
+    const handleForceLogout = () => logout();
+    window.addEventListener('auth:logout', handleForceLogout);
+    return () => window.removeEventListener('auth:logout', handleForceLogout);
+  }, [logout]);
 
   useEffect(() => {
     if (verificado.current) return;
@@ -56,12 +68,6 @@ export function AuthProvider({ children }) {
     localStorage.setItem('usuario', JSON.stringify(data.usuario));
     setUsuario(data.usuario);
     return data;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('usuario');
-    setUsuario(null);
   };
 
   return (

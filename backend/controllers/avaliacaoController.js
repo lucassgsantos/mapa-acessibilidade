@@ -1,7 +1,8 @@
 const Avaliacao = require('../models/Avaliacao');
 const Local = require('../models/Local');
+const { recalcularMedia } = require('../utils/calcularMedia');
 
-exports.criarAvaliacao = async (req, res) => {
+exports.criarAvaliacao = async (req, res, next) => {
   try {
     const { local, nota, comentario, recursosConfirmados, tipoDeficiencia } = req.body;
 
@@ -25,21 +26,18 @@ exports.criarAvaliacao = async (req, res) => {
     });
 
     await avaliacao.populate('autor', 'nome tipoDeficiencia');
-
-    const avaliacoes = await Avaliacao.find({ local });
-    const media = avaliacoes.reduce((acc, av) => acc + av.nota, 0) / avaliacoes.length;
-    await Local.findByIdAndUpdate(local, { notaAcessibilidade: Math.round(media * 10) / 10 });
+    await recalcularMedia(local);
 
     res.status(201).json(avaliacao);
   } catch (error) {
     if (error.code === 11000) {
       return res.status(400).json({ mensagem: 'Você já avaliou este local' });
     }
-    res.status(500).json({ mensagem: 'Erro ao criar avaliação', erro: error.message });
+    next(error);
   }
 };
 
-exports.listarAvaliacoes = async (req, res) => {
+exports.listarAvaliacoes = async (req, res, next) => {
   try {
     const avaliacoes = await Avaliacao.find({ local: req.params.localId })
       .populate('autor', 'nome tipoDeficiencia')
@@ -47,11 +45,11 @@ exports.listarAvaliacoes = async (req, res) => {
 
     res.json(avaliacoes);
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao listar avaliações', erro: error.message });
+    next(error);
   }
 };
 
-exports.deletarAvaliacao = async (req, res) => {
+exports.deletarAvaliacao = async (req, res, next) => {
   try {
     const avaliacao = await Avaliacao.findById(req.params.id);
 
@@ -65,17 +63,10 @@ exports.deletarAvaliacao = async (req, res) => {
 
     const localId = avaliacao.local;
     await Avaliacao.findByIdAndDelete(req.params.id);
-
-    const avaliacoes = await Avaliacao.find({ local: localId });
-    if (avaliacoes.length > 0) {
-      const media = avaliacoes.reduce((acc, av) => acc + av.nota, 0) / avaliacoes.length;
-      await Local.findByIdAndUpdate(localId, { notaAcessibilidade: Math.round(media * 10) / 10 });
-    } else {
-      await Local.findByIdAndUpdate(localId, { notaAcessibilidade: 3 });
-    }
+    await recalcularMedia(localId);
 
     res.json({ mensagem: 'Avaliação removida com sucesso' });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao deletar avaliação', erro: error.message });
+    next(error);
   }
 };

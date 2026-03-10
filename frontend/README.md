@@ -1,23 +1,22 @@
 # AcessaMapa - Frontend
 
-Interface web do AcessaMapa, com mapa interativo para visualizar e cadastrar locais acessíveis.
+Interface do AcessaMapa. Mapa interativo pra visualizar e cadastrar locais acessíveis.
 
 ## Stack
 
-- React 19
-- Vite
-- Tailwind CSS
+- React 19 + Vite 7
+- Tailwind CSS v4
 - Leaflet / React-Leaflet
-- React Router
+- React Router v7
 - Axios
 
 ## Páginas
 
-- **Home** — Mapa interativo + lista lateral com filtros e busca
-- **Login** — Tela de login e criação de conta
-- **Novo Local** — Formulário para cadastrar um local com seleção no mapa
-- **Detalhes** — Informações do local, recursos de acessibilidade e avaliações
-- **Estatísticas** — Dashboard com dados gerais de acessibilidade
+- **Home** — mapa + sidebar com filtros e busca
+- **Login** — login / registro
+- **Novo Local** — form com seleção no mapa
+- **Detalhes** — info do local, recursos e avaliações
+- **Estatísticas** — dashboard geral
 
 ## Rodando
 
@@ -26,6 +25,4 @@ npm install
 npm run dev
 ```
 
-O servidor de desenvolvimento roda em `http://localhost:5173`.
-
-As chamadas para `/api` são redirecionadas automaticamente para `http://localhost:5000` via proxy do Vite.
+Roda em `http://localhost:5173`. Proxy do Vite redireciona `/api` pra `http://localhost:5000`.

@@ -1,49 +1,49 @@
 # AcessaMapa - Backend
 
-API REST do AcessaMapa, responsável por autenticação, CRUD de locais e sistema de avaliações.
+API REST pra autenticação, CRUD de locais e avaliações.
 
 ## Stack
 
 - Node.js + Express
-- MongoDB com Mongoose
-- JWT para autenticação
-- bcryptjs para hash de senhas
+- MongoDB + Mongoose
+- JWT + bcryptjs
+- express-validator
+- helmet + express-rate-limit
 
 ## Endpoints
 
-### Autenticação
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/auth/registro` | Criar conta |
-| POST | `/api/auth/login` | Login |
-| GET | `/api/auth/perfil` | Dados do usuário logado |
-| PUT | `/api/auth/perfil` | Atualizar perfil |
+### Auth
+| Método | Rota | Auth |
+|--------|------|------|
+| POST | `/api/auth/registro` | não |
+| POST | `/api/auth/login` | não |
+| GET | `/api/auth/perfil` | sim |
+| PUT | `/api/auth/perfil` | sim |
 
 ### Locais
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/api/locais` | Listar locais (com filtros) |
-| GET | `/api/locais/:id` | Detalhes de um local |
-| POST | `/api/locais` | Cadastrar local |
-| PUT | `/api/locais/:id` | Editar local |
-| DELETE | `/api/locais/:id` | Remover local |
-| GET | `/api/locais/estatisticas/geral` | Estatísticas gerais |
+| Método | Rota | Auth |
+|--------|------|------|
+| GET | `/api/locais` | não |
+| GET | `/api/locais/:id` | não |
+| POST | `/api/locais` | sim |
+| PUT | `/api/locais/:id` | sim (autor) |
+| DELETE | `/api/locais/:id` | sim (autor) |
+| GET | `/api/locais/estatisticas/geral` | não |
 
 ### Avaliações
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| POST | `/api/avaliacoes` | Criar avaliação |
-| GET | `/api/avaliacoes/local/:localId` | Avaliações de um local |
-| DELETE | `/api/avaliacoes/:id` | Remover avaliação |
+| Método | Rota | Auth |
+|--------|------|------|
+| POST | `/api/avaliacoes` | sim |
+| GET | `/api/avaliacoes/local/:localId` | não |
+| DELETE | `/api/avaliacoes/:id` | sim (autor) |
 
-## Configuração
-
-Crie um arquivo `.env` na raiz do backend:
+## .env
 
 ```
 PORT=5000
-MONGODB_URI=sua_connection_string_aqui
-JWT_SECRET=sua_chave_secreta
+MONGODB_URI=sua_connection_string
+JWT_SECRET=chave_secreta
+CORS_ORIGIN=http://localhost:5173
 ```
 
 ## Rodando

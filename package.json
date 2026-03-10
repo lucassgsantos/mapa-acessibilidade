@@ -6,8 +6,16 @@
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
     "install-all": "cd backend && npm install && cd ../frontend && npm install",
-    "dev": "echo Execute 'npm run backend' e 'npm run frontend' em terminais separados"
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\""
   },
-  "keywords": ["acessibilidade", "mapa", "inclusão", "urbano"],
-  "license": "MIT"
+  "keywords": [
+    "acessibilidade",
+    "mapa",
+    "inclusão",
+    "urbano"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
 }

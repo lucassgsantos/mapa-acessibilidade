@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/useAuth';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Login from './pages/Login';
@@ -17,29 +18,31 @@ function RotaPrivada({ children }) {
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <div className="min-h-screen bg-gray-50">
-          <a href="#conteudo-principal" className="skip-link">
-            Pular para o conteúdo principal
-          </a>
-          <Navbar />
-          <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/local/:id" element={<DetalhesLocal />} />
-            <Route path="/estatisticas" element={<Estatisticas />} />
-            <Route path="/novo-local" element={
-              <RotaPrivada>
-                <NovoLocal />
-              </RotaPrivada>
-            } />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </div>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <div className="min-h-screen bg-gray-50">
+            <a href="#conteudo-principal" className="skip-link">
+              Pular para o conteúdo principal
+            </a>
+            <Navbar />
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/local/:id" element={<DetalhesLocal />} />
+              <Route path="/estatisticas" element={<Estatisticas />} />
+              <Route path="/novo-local" element={
+                <RotaPrivada>
+                  <NovoLocal />
+                </RotaPrivada>
+              } />
+              <Route path="*" element={<Navigate to="/" />} />
+            </Routes>
+          </div>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

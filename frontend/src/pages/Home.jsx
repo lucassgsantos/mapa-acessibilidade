@@ -6,6 +6,7 @@ import { RecursoBadge, CategoriaBadge } from '../components/RecursosInfo';
 import StarRating from '../components/StarRating';
 import { Link } from 'react-router-dom';
 import { FiSearch, FiFilter, FiX } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const [locais, setLocais] = useState([]);
@@ -20,9 +21,10 @@ export default function Home() {
       const params = { ...filtros };
       if (busca) params.busca = busca;
       const { data } = await listarLocais(params);
-      setLocais(data);
+      setLocais(data.locais || data);
     } catch (error) {
       console.error('Erro ao carregar locais:', error);
+      toast.error('Erro ao carregar locais. Tente novamente.');
     } finally {
       setCarregando(false);
     }

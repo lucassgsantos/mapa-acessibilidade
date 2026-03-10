@@ -5,7 +5,7 @@ const gerarToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-exports.registro = async (req, res) => {
+exports.registro = async (req, res, next) => {
   try {
     const { nome, email, senha, tipoDeficiencia, bio } = req.body;
 
@@ -21,11 +21,11 @@ exports.registro = async (req, res) => {
       token: gerarToken(usuario._id)
     });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao registrar usuário', erro: error.message });
+    next(error);
   }
 };
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const { email, senha } = req.body;
 
@@ -44,11 +44,11 @@ exports.login = async (req, res) => {
       token: gerarToken(usuario._id)
     });
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao fazer login', erro: error.message });
+    next(error);
   }
 };
 
-exports.perfil = async (req, res) => {
+exports.perfil = async (req, res, next) => {
   try {
     const usuario = await User.findById(req.usuario.id);
     if (!usuario) {
@@ -56,11 +56,11 @@ exports.perfil = async (req, res) => {
     }
     res.json(usuario);
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao buscar perfil', erro: error.message });
+    next(error);
   }
 };
 
-exports.atualizarPerfil = async (req, res) => {
+exports.atualizarPerfil = async (req, res, next) => {
   try {
     const { nome, bio, tipoDeficiencia } = req.body;
     const usuario = await User.findByIdAndUpdate(
@@ -70,6 +70,6 @@ exports.atualizarPerfil = async (req, res) => {
     );
     res.json(usuario);
   } catch (error) {
-    res.status(500).json({ mensagem: 'Erro ao atualizar perfil', erro: error.message });
+    next(error);
   }
 };

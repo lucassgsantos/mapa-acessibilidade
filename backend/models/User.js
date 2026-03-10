@@ -13,12 +13,13 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Email é obrigatório'],
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    match: [/^\S+@\S+\.\S+$/, 'Formato de email inválido']
   },
   senha: {
     type: String,
     required: [true, 'Senha é obrigatória'],
-    minlength: 6
+    minlength: [8, 'Senha deve ter no mínimo 8 caracteres']
   },
   avatar: {
     type: String,

@@ -21,7 +21,8 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
-      window.location.href = '/login';
+      const event = new CustomEvent('auth:logout');
+      window.dispatchEvent(event);
     }
     return Promise.reject(error);
   }

@@ -36,11 +36,15 @@ const localSchema = new mongoose.Schema({
   coordenadas: {
     lat: {
       type: Number,
-      required: [true, 'Latitude é obrigatória']
+      required: [true, 'Latitude é obrigatória'],
+      min: [-90, 'Latitude deve ser no mínimo -90'],
+      max: [90, 'Latitude deve ser no máximo 90']
     },
     lng: {
       type: Number,
-      required: [true, 'Longitude é obrigatória']
+      required: [true, 'Longitude é obrigatória'],
+      min: [-180, 'Longitude deve ser no mínimo -180'],
+      max: [180, 'Longitude deve ser no máximo 180']
     }
   },
   recursos: {

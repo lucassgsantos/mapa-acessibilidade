@@ -66,7 +66,10 @@ function UserLocationButton() {
         map.flyTo([pos.coords.latitude, pos.coords.longitude], 15);
         setLoading(false);
       },
-      () => setLoading(false),
+      (err) => {
+        setLoading(false);
+        console.warn('Geolocalização indisponível:', err.message);
+      },
       { enableHighAccuracy: true }
     );
   };
@@ -76,7 +79,7 @@ function UserLocationButton() {
       onClick={centralizarUsuario}
       disabled={loading}
       className="absolute top-4 right-4 z-[1000] bg-white px-3 py-2 rounded-lg shadow-md hover:bg-gray-50 text-sm font-medium text-gray-700 border border-gray-200"
-      aria-label="Centralizar no minha localização"
+      aria-label="Centralizar na minha localização"
     >
       {loading ? '📍 Localizando...' : '📍 Minha Localização'}
     </button>
@@ -90,7 +93,7 @@ export default function MapaInterativo({ locais = [], onLocationSelect, marcador
     if (!centroInicial) {
       navigator.geolocation.getCurrentPosition(
         (pos) => setCentro([pos.coords.latitude, pos.coords.longitude]),
-        () => {}
+        (err) => console.warn('Geolocalização indisponível:', err.message)
       );
     }
   }, [centroInicial]);
