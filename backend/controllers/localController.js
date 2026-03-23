@@ -63,6 +63,10 @@ exports.listarLocais = async (req, res, next) => {
 
 exports.obterLocal = async (req, res, next) => {
   try {
+    const pageNum = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const skip = (pageNum - 1) * limitNum;
+
     const local = await Local.findById(req.params.id)
       .populate('autor', 'nome email');
 
@@ -70,19 +74,36 @@ exports.obterLocal = async (req, res, next) => {
       return res.status(404).json({ mensagem: 'Local não encontrado' });
     }
 
-    const avaliacoes = await Avaliacao.find({ local: local._id })
-      .populate('autor', 'nome tipoDeficiencia')
-      .sort({ createdAt: -1 });
+    const [avaliacoes, totalAvaliacoes, resumoAvaliacoes] = await Promise.all([
+      Avaliacao.find({ local: local._id })
+        .populate('autor', 'nome tipoDeficiencia')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Avaliacao.countDocuments({ local: local._id }),
+      Avaliacao.aggregate([
+        { $match: { local: local._id } },
+        { $group: { _id: null, media: { $avg: '$nota' } } }
+      ])
+    ]);
 
-    const mediaAvaliacoes = avaliacoes.length > 0
-      ? avaliacoes.reduce((acc, av) => acc + av.nota, 0) / avaliacoes.length
+    const mediaAvaliacoes = resumoAvaliacoes.length > 0
+      ? resumoAvaliacoes[0].media
       : local.notaAcessibilidade;
+    const totalPaginas = Math.ceil(totalAvaliacoes / limitNum);
 
     res.json({
       local,
       avaliacoes,
       mediaAvaliacoes: Math.round(mediaAvaliacoes * 10) / 10,
-      totalAvaliacoes: avaliacoes.length
+      totalAvaliacoes,
+      paginacaoAvaliacoes: {
+        pagina: pageNum,
+        limite: limitNum,
+        total: totalAvaliacoes,
+        paginas: totalPaginas,
+        temProximaPagina: pageNum < totalPaginas
+      }
     });
   } catch (error) {
     next(error);

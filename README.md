@@ -38,7 +38,7 @@ Crie o `backend/.env` a partir do exemplo:
 cp backend/.env.example backend/.env
 ```
 
-Preencha `MONGODB_URI`, `JWT_SECRET` e opcionalmente `CORS_ORIGIN`.
+Preencha `MONGODB_URI`, `JWT_SECRET`, `REFRESH_TOKEN_SECRET` e opcionalmente `CORS_ORIGIN`.
 
 Pra rodar tudo junto:
 

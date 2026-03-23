@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { obterLocal, criarAvaliacao, deletarLocal, deletarAvaliacao } from '../services/api';
+import { obterLocal, criarAvaliacao, listarAvaliacoes, deletarLocal, deletarAvaliacao } from '../services/api';
 import { CATEGORIAS, RECURSOS, TIPOS_DEFICIENCIA } from '../constants';
 import { RecursoBadge, CategoriaBadge } from '../components/RecursosInfo';
 import StarRating from '../components/StarRating';
@@ -9,12 +9,16 @@ import { useAuth } from '../context/useAuth';
 import toast from 'react-hot-toast';
 import { FiArrowLeft, FiTrash2, FiSend, FiClock, FiUser } from 'react-icons/fi';
 
+const LIMITE_AVALIACOES = 10;
+
 export default function DetalhesLocal() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { usuario, autenticado } = useAuth();
   const [dados, setDados] = useState(null);
+  const [paginacaoAvaliacoes, setPaginacaoAvaliacoes] = useState(null);
   const [carregando, setCarregando] = useState(true);
+  const [carregandoMais, setCarregandoMais] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [novaAvaliacao, setNovaAvaliacao] = useState({
     nota: 3,
@@ -26,8 +30,9 @@ export default function DetalhesLocal() {
   const carregarDados = useCallback(async () => {
     try {
       setCarregando(true);
-      const { data } = await obterLocal(id);
+      const { data } = await obterLocal(id, { page: 1, limit: LIMITE_AVALIACOES });
       setDados(data);
+      setPaginacaoAvaliacoes(data.paginacaoAvaliacoes || null);
     } catch {
       toast.error('Erro ao carregar local');
       navigate('/');
@@ -58,6 +63,28 @@ export default function DetalhesLocal() {
       toast.error(err.response?.data?.mensagem || 'Erro ao avaliar');
     } finally {
       setEnviando(false);
+    }
+  };
+
+  const handleCarregarMaisAvaliacoes = async () => {
+    if (!paginacaoAvaliacoes?.temProximaPagina || carregandoMais) {
+      return;
+    }
+
+    setCarregandoMais(true);
+    try {
+      const proximaPagina = paginacaoAvaliacoes.pagina + 1;
+      const { data } = await listarAvaliacoes(id, { page: proximaPagina, limit: LIMITE_AVALIACOES });
+
+      setDados((prev) => ({
+        ...prev,
+        avaliacoes: [...(prev?.avaliacoes || []), ...(data.avaliacoes || [])]
+      }));
+      setPaginacaoAvaliacoes(data.paginacao || null);
+    } catch {
+      toast.error('Erro ao carregar mais avaliações');
+    } finally {
+      setCarregandoMais(false);
     }
   };
 
@@ -267,6 +294,19 @@ export default function DetalhesLocal() {
 
                 {avaliacoes.length === 0 && (
                   <p className="text-center text-gray-400 py-8">Nenhuma avaliação ainda. Seja o primeiro!</p>
+                )}
+
+                {paginacaoAvaliacoes?.temProximaPagina && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      type="button"
+                      onClick={handleCarregarMaisAvaliacoes}
+                      disabled={carregandoMais}
+                      className="px-5 py-2 border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {carregandoMais ? 'Carregando...' : 'Carregar mais avaliações'}
+                    </button>
+                  </div>
                 )}
               </div>
             </section>

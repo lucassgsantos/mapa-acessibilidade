@@ -43,6 +43,7 @@ API REST pra autenticação, CRUD de locais e avaliações.
 PORT=5000
 MONGODB_URI=sua_connection_string
 JWT_SECRET=chave_secreta
+REFRESH_TOKEN_SECRET=chave_refresh_secreta
 CORS_ORIGIN=http://localhost:5173
 ```
 

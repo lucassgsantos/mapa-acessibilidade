@@ -1,20 +1,35 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { login as loginAPI, registrar as registrarAPI, obterPerfil } from '../services/api';
 import { AuthContext } from './AuthContextDef';
+import toast from 'react-hot-toast';
 
 function getUsuarioInicial() {
   try {
     const token = localStorage.getItem('token');
+    const refreshToken = localStorage.getItem('refreshToken');
     const usuarioSalvo = localStorage.getItem('usuario');
-    if (token && usuarioSalvo) {
-      return JSON.parse(usuarioSalvo);
+
+    if (token && refreshToken && usuarioSalvo) {
+      const usuario = JSON.parse(usuarioSalvo);
+      if (usuario && typeof usuario === 'object' && usuario._id && usuario.nome) {
+        return usuario;
+      }
     }
-  } catch {}
+
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('usuario');
+  } catch {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('usuario');
+  }
+
   return null;
 }
 
 function getCarregandoInicial() {
-  return !!localStorage.getItem('token');
+  return !!(localStorage.getItem('token') && localStorage.getItem('refreshToken'));
 }
 
 export function AuthProvider({ children }) {
@@ -24,12 +39,20 @@ export function AuthProvider({ children }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
     localStorage.removeItem('usuario');
     setUsuario(null);
   }, []);
 
   useEffect(() => {
-    const handleForceLogout = () => logout();
+    const handleForceLogout = (event) => {
+      const reason = event?.detail?.reason;
+      if (reason === 'TOKEN_EXPIRADO' || reason === 'REFRESH_TOKEN_EXPIRADO') {
+        toast.error('Sua sessão expirou. Faça login novamente.');
+      }
+      logout();
+    };
+
     window.addEventListener('auth:logout', handleForceLogout);
     return () => window.removeEventListener('auth:logout', handleForceLogout);
   }, [logout]);
@@ -39,7 +62,8 @@ export function AuthProvider({ children }) {
     verificado.current = true;
 
     const token = localStorage.getItem('token');
-    if (token) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (token && refreshToken) {
       obterPerfil()
         .then(res => {
           setUsuario(res.data);
@@ -47,6 +71,7 @@ export function AuthProvider({ children }) {
         })
         .catch(() => {
           localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
           localStorage.removeItem('usuario');
           setUsuario(null);
         })
@@ -56,7 +81,10 @@ export function AuthProvider({ children }) {
 
   const loginFn = async (email, senha) => {
     const { data } = await loginAPI({ email, senha });
-    localStorage.setItem('token', data.token);
+    localStorage.setItem('token', data.accessToken || data.token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('usuario', JSON.stringify(data.usuario));
     setUsuario(data.usuario);
     return data;
@@ -64,7 +92,10 @@ export function AuthProvider({ children }) {
 
   const registrarFn = async (dados) => {
     const { data } = await registrarAPI(dados);
-    localStorage.setItem('token', data.token);
+    localStorage.setItem('token', data.accessToken || data.token);
+    if (data.refreshToken) {
+      localStorage.setItem('refreshToken', data.refreshToken);
+    }
     localStorage.setItem('usuario', JSON.stringify(data.usuario));
     setUsuario(data.usuario);
     return data;

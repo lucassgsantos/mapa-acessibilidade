@@ -39,11 +39,31 @@ exports.criarAvaliacao = async (req, res, next) => {
 
 exports.listarAvaliacoes = async (req, res, next) => {
   try {
-    const avaliacoes = await Avaliacao.find({ local: req.params.localId })
-      .populate('autor', 'nome tipoDeficiencia')
-      .sort({ createdAt: -1 });
+    const pageNum = Math.max(1, parseInt(req.query.page, 10) || 1);
+    const limitNum = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 10));
+    const skip = (pageNum - 1) * limitNum;
 
-    res.json(avaliacoes);
+    const [avaliacoes, total] = await Promise.all([
+      Avaliacao.find({ local: req.params.localId })
+        .populate('autor', 'nome tipoDeficiencia')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum),
+      Avaliacao.countDocuments({ local: req.params.localId })
+    ]);
+
+    const totalPaginas = Math.ceil(total / limitNum);
+
+    res.json({
+      avaliacoes,
+      paginacao: {
+        pagina: pageNum,
+        limite: limitNum,
+        total,
+        paginas: totalPaginas,
+        temProximaPagina: pageNum < totalPaginas
+      }
+    });
   } catch (error) {
     next(error);
   }

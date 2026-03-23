@@ -6,7 +6,7 @@ const rateLimit = require('express-rate-limit');
 const dns = require('dns');
 require('dotenv').config();
 
-const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET'];
+const requiredEnvVars = ['MONGODB_URI', 'JWT_SECRET', 'REFRESH_TOKEN_SECRET'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     console.error(`❌ Variável de ambiente obrigatória não definida: ${envVar}`);
@@ -41,7 +41,8 @@ app.use('/api', limiter);
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 8,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: { mensagem: 'Muitas tentativas de autenticação. Tente novamente em 15 minutos.' }
